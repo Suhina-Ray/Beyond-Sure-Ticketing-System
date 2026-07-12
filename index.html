@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BeyondSure Insurance Portal</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="orb-field">
+  <div class="orb orb-a"></div>
+  <div class="orb orb-b"></div>
+  <div class="orb orb-c"></div>
+  <div class="orb orb-d"></div>
+</div>
+
+<div class="app">
+
+  <!-- ======================= LOGIN SCREEN ======================= -->
+  <div id="screen-login" class="center-stage">
+    <div class="login-card">
+      <div class="login-top">
+        <div class="brand">
+          <span class="tag">Beyond</span>
+          <span class="name">Sure</span>
+        </div>
+        <div class="theme-toggle" id="themeToggleLogin" title="Toggle dark mode">
+          <div class="knob"><span id="themeIconLogin">☀️</span></div>
+        </div>
+      </div>
+      <h1 class="title">Welcome back</h1>
+      <p class="sub">Sign in with your email and password to access the dashboard.</p>
+      <form id="loginForm">
+        <div class="field">
+          <label for="loginEmail">Email Address</label>
+          <input type="email" id="loginEmail" placeholder="you@beyondsure.in" required>
+        </div>
+        <div class="field">
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" placeholder="••••••••" required>
+        </div>
+        <p class="form-error hidden" id="loginError">Invalid email or password.</p>
+        <button type="submit" class="btn btn-primary">Continue</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================= MAIN APP ======================= -->
+  <div id="screen-main" class="hidden" style="display:flex;flex-direction:column;flex:1;">
+    <div class="topnav">
+      <div class="left">
+        <div class="nav-brand">
+          <span class="tag">Beyond</span>
+          <span class="name">Sure</span>
+        </div>
+        <div class="nav-links">
+          <div class="nav-link active" data-page="dashboard">Dashboard</div>
+          <div class="nav-link" data-page="tickets">Tickets</div>
+          <div class="nav-link" data-page="employees">Employees</div>
+        </div>
+      </div>
+      <div class="right">
+        <div class="theme-toggle" id="themeToggleMain" title="Toggle dark mode">
+          <div class="knob"><span id="themeIconMain">☀️</span></div>
+        </div>
+        <div class="user-chip">
+          <div class="user-avatar" id="userAvatar">?</div>
+          <span class="user-name" id="userNameLabel">-</span>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="logoutBtn">Log out</button>
+      </div>
+    </div>
+
+    <!-- -------- Dashboard Page -------- -->
+    <div class="page" id="page-dashboard">
+      <div class="page-head">
+        <div>
+          <h2>Dashboard</h2>
+          <p id="dashboardGreeting">Good morning, Organisation Overview</p>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="lbl">Total Tickets</div>
+          <div class="num" id="statTotalTickets">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="lbl">Open Tickets</div>
+          <div class="num accent" id="statOpenTickets">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="lbl">WIP Tickets</div>
+          <div class="num" id="statWipTickets">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="lbl">Unassigned Tickets</div>
+          <div class="num" id="statUnassignedTickets">0</div>
+        </div>
+      </div>
+
+      <p class="section-title">Ticket Status Breakdown</p>
+      <div class="stage-grid" id="stageGrid"></div>
+
+      <p class="section-title">Recent Ticket Activity</p>
+      <div class="panel">
+        <div id="followupsList"></div>
+        <div id="followupsEmpty" class="empty-state hidden">
+          <div class="big">📭</div>
+          <h3>No activity yet</h3>
+          <p>Raise or update a ticket to see activity here.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- -------- Tickets Page -------- -->
+    <div class="page hidden" id="page-tickets">
+      <div class="page-head">
+        <div>
+          <h2>Tickets <span class="count-pill" id="ticketsCountPill">0</span></h2>
+          <p>Raise tickets and track their status.</p>
+        </div>
+        <div class="head-actions">
+          <button class="btn btn-ghost btn-auto" id="exportTicketsBtn">Export</button>
+          <button class="btn btn-primary btn-auto" id="openAddTicket">+ Raise Ticket</button>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <div class="search-wrap">
+          <input type="text" id="ticketSearch" placeholder="Search tickets by subject or description...">
+        </div>
+        <select id="filterTicketStatus"><option value="">All Statuses</option></select>
+        <select id="filterTicketEmployee"><option value="">All Employees</option></select>
+        <input type="date" id="filterTicketDate" title="Created on">
+      </div>
+
+      <div class="panel">
+        <table id="ticketTable">
+          <thead>
+            <tr>
+              <th>Created</th>
+              <th>Subject</th>
+              <th>Status</th>
+              <th>Assigned To</th>
+              <th>Attachments</th>
+            </tr>
+          </thead>
+          <tbody id="ticketBody"></tbody>
+        </table>
+        <div id="ticketEmpty" class="empty-state hidden">
+          <div class="big">🎫</div>
+          <h3>No tickets found</h3>
+          <p>Try adjusting your filters, or raise a new ticket.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- -------- Employees Page -------- -->
+    <div class="page hidden" id="page-employees">
+      <div class="page-head">
+        <div>
+          <h2>Employee Directory</h2>
+          <p>Manage employee records and insurances issued.</p>
+        </div>
+        <button class="btn btn-primary btn-auto" id="openAddEmployee">+ Add Employee</button>
+      </div>
+      <div class="panel">
+        <table id="employeeTable">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Date of Birth</th>
+              <th>Insurances Issued</th>
+              <th style="text-align:right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="employeeBody"></tbody>
+        </table>
+        <div id="employeeEmpty" class="empty-state hidden">
+          <div class="big">🗂️</div>
+          <h3>No employees yet</h3>
+          <p>Add your first employee to get started.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= MODAL: Add Employee ======================= -->
+<div class="overlay hidden" id="employeeModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Add Employee</h3>
+      <button class="modal-close" data-close="employeeModal">&times;</button>
+    </div>
+    <form id="employeeForm">
+      <div class="modal-body">
+        <div class="field">
+          <label>Name</label>
+          <input type="text" id="empName" required placeholder="Full name">
+        </div>
+        <div class="two-col">
+          <div class="field">
+            <label>Email</label>
+            <input type="email" id="empEmail" required placeholder="name@company.com">
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input type="password" id="empPassword" required placeholder="Login password">
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="field">
+            <label>Date of Birth</label>
+            <input type="date" id="empDob" required>
+          </div>
+          <div class="field">
+            <label>No. of Insurances Issued</label>
+            <input type="number" id="empInsurances" min="0" value="0" required>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" data-close="employeeModal">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Employee</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ======================= MODAL: Raise Ticket ======================= -->
+<div class="overlay hidden" id="ticketModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Raise Ticket</h3>
+      <button class="modal-close" data-close="ticketModal">&times;</button>
+    </div>
+    <form id="ticketForm">
+      <div class="modal-body">
+        <div class="field">
+          <label>Subject</label>
+          <input type="text" id="tSubject" required placeholder="Brief summary of the issue">
+        </div>
+        <div class="field">
+          <label>Description</label>
+          <textarea id="tDescription" rows="3" required placeholder="Describe the issue in detail"></textarea>
+        </div>
+        <div class="field">
+          <label>Attachments</label>
+          <input type="file" id="tAttachments" multiple>
+        </div>
+        <div class="two-col">
+          <div class="field">
+            <label>Status</label>
+            <select id="tStatus"></select>
+          </div>
+          <div class="field">
+            <label>Assigned To</label>
+            <select id="tAssignedTo"><option value="">Unassigned</option></select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Remarks</label>
+          <textarea id="tRemarks" rows="2" placeholder="Optional remarks"></textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" data-close="ticketModal">Cancel</button>
+        <button type="submit" class="btn btn-primary">Raise Ticket</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ======================= MODAL: View / Edit Ticket ======================= -->
+<div class="overlay hidden" id="viewTicketModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Ticket Details</h3>
+      <button class="modal-close" data-close="viewTicketModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Subject</label>
+        <input type="text" id="viewTicketSubject">
+      </div>
+      <div class="field">
+        <label>Description</label>
+        <textarea id="viewTicketDescription" rows="3"></textarea>
+      </div>
+      <div class="detail-block">
+        <div class="lbl">Attachments</div>
+        <div class="val" id="viewTicketAttachments"></div>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label>Status</label>
+          <select id="viewTicketStatus"></select>
+        </div>
+        <div class="field">
+          <label>Assigned To</label>
+          <select id="viewTicketAssignedTo"><option value="">Unassigned</option></select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Remarks</label>
+        <textarea id="viewTicketRemarks" rows="2" placeholder="Add a remark..."></textarea>
+      </div>
+      <div class="detail-row"><span class="detail-label">Raised On</span><span id="viewTicketDate"></span></div>
+
+      <div style="margin-top:18px;">
+        <div class="lbl" style="font-size:11.5px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);font-weight:700;margin-bottom:8px;">Activity</div>
+        <div class="activity-log" id="viewTicketActivity"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-ghost" data-close="viewTicketModal">Close</button>
+      <button type="button" class="btn btn-primary" id="saveTicketBtn">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/state.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/theme.js"></script>
+<script src="js/employees.js"></script>
+<script src="js/tickets.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>
