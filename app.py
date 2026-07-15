@@ -9,7 +9,13 @@ import datetime
 import os
 load_dotenv()
 app = Flask(__name__, static_folder=".", static_url_path="")
-CORS(app)  
+CORS(app)
+
+@app.route("/")
+def serve_index():
+    """Serve the frontend's index.html at the site root."""
+    return send_from_directory(app.static_folder, "index.html")
+
 # ── MySQL Configuration ──────────────────────────────────────────────────────
 TICKET_DB = {
     "host":     os.getenv("DB_HOST",        "localhost"),
@@ -55,8 +61,14 @@ def token_required(f):
             )
             employee = cursor.fetchone()
         finally:
-            cursor.close()
-            conn.close()
+            try:
+                cursor.close()
+            except Exception:
+                pass
+            try:
+                conn.close()
+            except Exception:
+                pass
 
         if not employee:
             return jsonify(success=False, message="Employee account not found."), 401
@@ -108,8 +120,14 @@ def get_employees():
     except mysql.connector.Error as e:
         return jsonify(success=False, message=str(e), employees=[]), 500
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 @app.route("/api/employees/<int:emp_id>", methods=["GET"])
@@ -134,8 +152,14 @@ def get_employee(emp_id):
     except mysql.connector.Error as e:
         return jsonify(success=False, message=str(e)), 500
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 @app.route("/api/employees", methods=["POST"])
@@ -179,8 +203,14 @@ def create_employee():
     except mysql.connector.Error as e:
         return jsonify(success=False, message=str(e)), 500
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 @app.route("/api/employees/<int:emp_id>", methods=["PUT"])
@@ -218,8 +248,14 @@ def update_employee(emp_id):
     except mysql.connector.Error as e:
         return jsonify(success=False, message=str(e)), 500
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -252,8 +288,14 @@ def employee_login():
         )
         employee = cursor.fetchone()
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
 
     # Email not found
     if not employee:
@@ -324,8 +366,14 @@ def get_my_profile(current_employee):
     except mysql.connector.Error as e:
         return jsonify(success=False, message=str(e)), 500
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -336,7 +384,8 @@ def get_my_profile(current_employee):
 def raise_ticket():
     """
     Customer raises a query (public endpoint — no login required).
-    Body (JSON): subject, description, saas_code, request_mobile_number, page_name
+    Body (JSON): subject, description, partner_name, request_mobile_number,
+                 page_name, category   — the latter four are optional.
     Returns: ticket_id of the newly created ticket.
     """
     data = request.get_json()
@@ -350,15 +399,17 @@ def raise_ticket():
         cursor = conn.cursor()
         cursor.execute(
             """
-            INSERT INTO tickets (subject, description, saas_code, request_mobile_number, page_name)
-            VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO tickets
+                (subject, description, partner_name, request_mobile_number, page_name, category)
+            VALUES (%s, %s, %s, %s, %s, %s)
             """,
             (
                 data["subject"].strip(),
                 data["description"].strip(),
-                data.get("saas_code",             "").strip() or None,
+                data.get("partner_name",          "").strip() or None,
                 data.get("request_mobile_number", "").strip() or None,
                 data.get("page_name",             "").strip() or None,
+                data.get("category",              "").strip() or None,
             )
         )
         conn.commit()
@@ -367,8 +418,70 @@ def raise_ticket():
     except mysql.connector.Error as e:
         return jsonify(success=False, message=str(e)), 500
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+
+@app.route("/api/tickets/stats/daily", methods=["GET"])
+def get_daily_ticket_stats():
+    """
+    Day-wise ticket counts for the last 7 days (today inclusive) — used by
+    the dashboard's opened-vs-closed chart.
+    Returns: [{date, opened, closed}, ...] oldest -> newest.
+    """
+    try:
+        conn   = get_ticket_db()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            """
+            SELECT DATE(created_at) AS day, COUNT(*) AS opened
+            FROM tickets
+            WHERE created_at >= (CURDATE() - INTERVAL 6 DAY)
+            GROUP BY DATE(created_at)
+            """
+        )
+        opened_rows = {str(r["day"]): r["opened"] for r in cursor.fetchall()}
+
+        cursor.execute(
+            """
+            SELECT DATE(closed_at) AS day, COUNT(*) AS closed
+            FROM tickets
+            WHERE closed_at IS NOT NULL AND closed_at >= (CURDATE() - INTERVAL 6 DAY)
+            GROUP BY DATE(closed_at)
+            """
+        )
+        closed_rows = {str(r["day"]): r["closed"] for r in cursor.fetchall()}
+
+        # Build a complete 7-day series (including days with zero activity)
+        today = datetime.date.today()
+        series = []
+        for i in range(6, -1, -1):
+            day = today - datetime.timedelta(days=i)
+            key = str(day)
+            series.append({
+                "date":   key,
+                "opened": opened_rows.get(key, 0),
+                "closed": closed_rows.get(key, 0),
+            })
+
+        return jsonify(success=True, stats=series)
+    except mysql.connector.Error as e:
+        return jsonify(success=False, message=str(e), stats=[]), 500
+    finally:
+        try:
+            cursor.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 @app.route("/api/tickets", methods=["GET"])
@@ -387,12 +500,15 @@ def get_tickets():
         SELECT  t.ticket_id,
                 t.subject,
                 t.description,
-                t.saas_code,
+                t.partner_name,
                 t.request_mobile_number,
                 t.page_name,
+                t.category,
                 t.remarks,
                 t.status,
                 t.assign_to,
+                t.assigned_at,
+                t.closed_at,
                 e.employee_name  AS assigned_to_name,
                 e.employee_code  AS assigned_to_code,
                 t.created_at,
@@ -417,14 +533,22 @@ def get_tickets():
         cursor.execute(base_query, params)
         rows = cursor.fetchall()
         for row in rows:
-            row["created_at"] = str(row["created_at"])
-            row["updated_at"] = str(row["updated_at"]) if row["updated_at"] else None
+            row["created_at"]  = str(row["created_at"])
+            row["updated_at"]  = str(row["updated_at"])  if row["updated_at"]  else None
+            row["assigned_at"] = str(row["assigned_at"]) if row["assigned_at"] else None
+            row["closed_at"]   = str(row["closed_at"])   if row["closed_at"]   else None
         return jsonify(success=True, tickets=rows, count=len(rows))
     except mysql.connector.Error as e:
         return jsonify(success=False, message=str(e), tickets=[]), 500
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 @app.route("/api/tickets/<int:ticket_id>", methods=["GET"])
@@ -438,8 +562,9 @@ def get_ticket(ticket_id):
         cursor.execute(
             """
             SELECT  t.ticket_id, t.subject, t.description,
-                    t.saas_code, t.request_mobile_number, t.page_name,
+                    t.partner_name, t.request_mobile_number, t.page_name, t.category,
                     t.remarks, t.status, t.assign_to,
+                    t.assigned_at, t.closed_at,
                     e.employee_name AS assigned_to_name,
                     e.employee_code AS assigned_to_code,
                     t.created_at, t.updated_at
@@ -452,8 +577,10 @@ def get_ticket(ticket_id):
         ticket = cursor.fetchone()
         if not ticket:
             return jsonify(success=False, message="Ticket not found."), 404
-        ticket["created_at"] = str(ticket["created_at"])
-        ticket["updated_at"] = str(ticket["updated_at"]) if ticket["updated_at"] else None
+        ticket["created_at"]  = str(ticket["created_at"])
+        ticket["updated_at"]  = str(ticket["updated_at"])  if ticket["updated_at"]  else None
+        ticket["assigned_at"] = str(ticket["assigned_at"]) if ticket["assigned_at"] else None
+        ticket["closed_at"]   = str(ticket["closed_at"])   if ticket["closed_at"]   else None
 
         # Attachments
         cursor.execute(
@@ -486,8 +613,14 @@ def get_ticket(ticket_id):
     except mysql.connector.Error as e:
         return jsonify(success=False, message=str(e)), 500
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 @app.route("/api/tickets/<int:ticket_id>", methods=["PUT"])
@@ -495,38 +628,53 @@ def update_ticket(ticket_id):
     """
     Admin updates a ticket: assign to employee, change status, add remarks.
     Body (JSON): assign_to (employee_id), status, remarks   — all optional
+
+    assigned_at is stamped the moment a ticket goes from unassigned -> assigned.
+    closed_at   is stamped the moment a ticket's status becomes 'Closed'.
     """
     data = request.get_json()
 
-    fields, params = [], []
-    if "assign_to" in data:
-        fields.append("assign_to = %s")
-        params.append(data["assign_to"])     # can be null to unassign
-    if "status" in data:
-        valid_statuses = ("Open", "In Progress", "Resolved", "Closed")
-        if data["status"] not in valid_statuses:
-            return jsonify(success=False, message=f"status must be one of {valid_statuses}"), 400
-        fields.append("status = %s")
-        params.append(data["status"])
-    if "remarks" in data:
-        fields.append("remarks = %s")
-        params.append(data["remarks"])
-
-    if not fields:
-        return jsonify(success=False, message="Nothing to update."), 400
-
-    params.append(ticket_id)
-
     try:
         conn   = get_ticket_db()
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True)
+
+        # Look at the ticket's current state first, so we know whether this
+        # update represents a real "just got assigned" / "just got closed"
+        # transition (rather than re-saving the same values).
+        cursor.execute("SELECT assign_to, status FROM tickets WHERE ticket_id = %s", (ticket_id,))
+        current = cursor.fetchone()
+        if not current:
+            return jsonify(success=False, message="Ticket not found."), 404
+
+        fields, params = [], []
+        if "assign_to" in data:
+            fields.append("assign_to = %s")
+            params.append(data["assign_to"])     # can be null to unassign
+            if data["assign_to"] and not current["assign_to"]:
+                fields.append("assigned_at = NOW()")
+        if "status" in data:
+            valid_statuses = ("Open", "In Progress", "Resolved", "Closed")
+            if data["status"] not in valid_statuses:
+                return jsonify(success=False, message=f"status must be one of {valid_statuses}"), 400
+            fields.append("status = %s")
+            params.append(data["status"])
+            if data["status"] == "Closed" and current["status"] != "Closed":
+                fields.append("closed_at = NOW()")
+            elif data["status"] != "Closed" and current["status"] == "Closed":
+                fields.append("closed_at = NULL")  # reopened
+        if "remarks" in data:
+            fields.append("remarks = %s")
+            params.append(data["remarks"])
+
+        if not fields:
+            return jsonify(success=False, message="Nothing to update."), 400
+
+        params.append(ticket_id)
         cursor.execute(
             f"UPDATE tickets SET {', '.join(fields)} WHERE ticket_id = %s",
             params
         )
         conn.commit()
-        if cursor.rowcount == 0:
-            return jsonify(success=False, message="Ticket not found."), 404
 
         # Log the activity
         remark_text = data.get("remarks") or f"Status changed to {data.get('status', '')}"
@@ -539,8 +687,14 @@ def update_ticket(ticket_id):
     except mysql.connector.Error as e:
         return jsonify(success=False, message=str(e)), 500
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 
@@ -618,8 +772,14 @@ def upload_attachment(ticket_id):
     except mysql.connector.Error as e:
         return jsonify(success=False, message=str(e)), 500
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 @app.route("/api/attachments/<int:attachment_id>", methods=["GET"])
@@ -651,8 +811,14 @@ def download_attachment(attachment_id):
     except mysql.connector.Error as e:
         return jsonify(success=False, message=str(e)), 500
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 @app.route("/api/tickets/<int:ticket_id>/attachments", methods=["GET"])
@@ -673,8 +839,14 @@ def list_attachments(ticket_id):
     except mysql.connector.Error as e:
         return jsonify(success=False, message=str(e)), 500
     finally:
-        cursor.close()
-        conn.close()
+        try:
+            cursor.close()
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 # ═════════════════════════════════════════════════════════════════════════════

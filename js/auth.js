@@ -1,58 +1,65 @@
 /* =========================================================
-   Auth / Login
+   Auth / Login  — now talks to /api/employees/login (real JWT auth)
    ========================================================= */
 function showApp(){
   document.getElementById('screen-login').classList.add('hidden');
   document.getElementById('screen-main').classList.remove('hidden');
-  document.getElementById('userNameLabel').textContent = currentUser.name;
-  document.getElementById('userAvatar').textContent = initials(currentUser.name);
+  document.getElementById('userNameLabel').textContent = currentUser.employee_name;
+  document.getElementById('userAvatar').textContent = initials(currentUser.employee_name);
   const hour = new Date().getHours();
   const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   document.getElementById('dashboardGreeting').textContent = `${greet} — Organisation Overview`;
 
+  loadAllData();
+  goToPage('dashboard');
+}
+
+async function loadAllData(){
+  try{
+    await Promise.all([fetchEmployees(), fetchTickets()]);
+  }catch(err){
+    console.error('Failed to load data:', err);
+    alert('Could not load data from the server: ' + err.message);
+  }
   populateAssigneeOptions();
   renderEmployees();
   renderTickets();
   renderDashboard();
-  goToPage('dashboard');
 }
 
 document.addEventListener('DOMContentLoaded', function(){
   const loginForm = document.getElementById('loginForm');
   const loginError = document.getElementById('loginError');
 
-  loginForm.addEventListener('submit', function(e){
+  loginForm.addEventListener('submit', async function(e){
     e.preventDefault();
     loginError.classList.add('hidden');
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
+    const submitBtn = loginForm.querySelector('button[type="submit"]');
 
-    if(employees.length === 0){
-      // First run: bootstrap an employee/admin record from these credentials
-      const namePart = email.split('@')[0] || 'Admin';
-      const name = namePart.charAt(0).toUpperCase() + namePart.slice(1);
-      const newEmp = { id: uid(), name: name, email: email, password: password, dob: '', insurances: 0 };
-      employees.push(newEmp);
-      save(LS_EMPLOYEES, employees);
-      currentUser = { name: newEmp.name, email: newEmp.email };
+    submitBtn.disabled = true;
+    try{
+      const data = await apiFetch('/api/employees/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+      });
+      setToken(data.token);
+      currentUser = data.employee;
       save(LS_USER, currentUser);
       showApp();
-      return;
-    }
-
-    const match = employees.find(emp => emp.email.toLowerCase() === email.toLowerCase() && emp.password === password);
-    if(match){
-      currentUser = { name: match.name, email: match.email };
-      save(LS_USER, currentUser);
-      showApp();
-    } else {
-      loginError.textContent = 'Invalid email or password.';
+    }catch(err){
+      loginError.textContent = err.message || 'Invalid email or password.';
       loginError.classList.remove('hidden');
+    }finally{
+      submitBtn.disabled = false;
     }
   });
 
-  document.getElementById('logoutBtn').addEventListener('click', function(){
+  document.getElementById('logoutBtn').addEventListener('click', async function(){
+    try{ await apiFetch('/api/employees/logout', { method: 'POST' }); }catch(e){ /* token may already be stale — ignore */ }
     currentUser = null;
+    setToken(null);
     localStorage.removeItem(LS_USER);
     document.getElementById('screen-main').classList.add('hidden');
     document.getElementById('screen-login').classList.remove('hidden');
@@ -60,5 +67,6 @@ document.addEventListener('DOMContentLoaded', function(){
     loginError.classList.add('hidden');
   });
 
-  if(currentUser){ showApp(); }
+  // Resume session if we still have a token
+  if(currentUser && getToken()){ showApp(); }
 });

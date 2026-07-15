@@ -22,8 +22,7 @@
     <div class="login-card">
       <div class="login-top">
         <div class="brand">
-          <span class="tag">Beyond</span>
-          <span class="name">Sure</span>
+          <img src="img/logo.jpg" alt="BeyondSure" class="brand-logo">
         </div>
         <div class="theme-toggle" id="themeToggleLogin" title="Toggle dark mode">
           <div class="knob"><span id="themeIconLogin">☀️</span></div>
@@ -51,8 +50,7 @@
     <div class="topnav">
       <div class="left">
         <div class="nav-brand">
-          <span class="tag">Beyond</span>
-          <span class="name">Sure</span>
+          <img src="img/logo.jpg" alt="BeyondSure" class="nav-logo">
         </div>
         <div class="nav-links">
           <div class="nav-link active" data-page="dashboard">Dashboard</div>
@@ -91,7 +89,7 @@
           <div class="num accent" id="statOpenTickets">0</div>
         </div>
         <div class="stat-card">
-          <div class="lbl">WIP Tickets</div>
+          <div class="lbl">In Progress Tickets</div>
           <div class="num" id="statWipTickets">0</div>
         </div>
         <div class="stat-card">
@@ -102,6 +100,11 @@
 
       <p class="section-title">Ticket Status Breakdown</p>
       <div class="stage-grid" id="stageGrid"></div>
+
+      <p class="section-title">Opened vs Closed — Last 7 Days</p>
+      <div class="panel chart-panel">
+        <div id="ticketTrendChart"></div>
+      </div>
 
       <p class="section-title">Recent Ticket Activity</p>
       <div class="panel">
@@ -142,9 +145,9 @@
             <tr>
               <th>Created</th>
               <th>Subject</th>
+              <th>Details</th>
               <th>Status</th>
               <th>Assigned To</th>
-              <th>Attachments</th>
             </tr>
           </thead>
           <tbody id="ticketBody"></tbody>
@@ -153,6 +156,11 @@
           <div class="big">🎫</div>
           <h3>No tickets found</h3>
           <p>Try adjusting your filters, or raise a new ticket.</p>
+        </div>
+        <div class="pagination" id="ticketPagination">
+          <button class="btn btn-ghost btn-sm" id="ticketPrevPage">← Prev</button>
+          <span class="page-indicator" id="ticketPageIndicator">Page 1</span>
+          <button class="btn btn-ghost btn-sm" id="ticketNextPage">Next →</button>
         </div>
       </div>
     </div>
@@ -172,8 +180,9 @@
             <tr>
               <th>Name</th>
               <th>Email</th>
-              <th>Date of Birth</th>
-              <th>Insurances Issued</th>
+              <th>Mobile</th>
+              <th>Designation / Dept</th>
+              <th>Status</th>
               <th style="text-align:right;">Actions</th>
             </tr>
           </thead>
@@ -198,9 +207,15 @@
     </div>
     <form id="employeeForm">
       <div class="modal-body">
-        <div class="field">
-          <label>Name</label>
-          <input type="text" id="empName" required placeholder="Full name">
+        <div class="two-col">
+          <div class="field">
+            <label>Name</label>
+            <input type="text" id="empName" required placeholder="Full name">
+          </div>
+          <div class="field">
+            <label>Employee Code</label>
+            <input type="text" id="empCode" required placeholder="e.g. EMP001">
+          </div>
         </div>
         <div class="two-col">
           <div class="field">
@@ -214,13 +229,17 @@
         </div>
         <div class="two-col">
           <div class="field">
-            <label>Date of Birth</label>
-            <input type="date" id="empDob" required>
+            <label>Mobile</label>
+            <input type="tel" id="empMobile" required placeholder="10-digit mobile number">
           </div>
           <div class="field">
-            <label>No. of Insurances Issued</label>
-            <input type="number" id="empInsurances" min="0" value="0" required>
+            <label>Designation</label>
+            <input type="text" id="empDesignation" placeholder="e.g. Support Executive">
           </div>
+        </div>
+        <div class="field">
+          <label>Department</label>
+          <input type="text" id="empDepartment" placeholder="e.g. Customer Support">
         </div>
       </div>
       <div class="modal-foot">
@@ -247,6 +266,20 @@
         <div class="field">
           <label>Description</label>
           <textarea id="tDescription" rows="3" required placeholder="Describe the issue in detail"></textarea>
+        </div>
+        <div class="two-col">
+          <div class="field">
+            <label>Partner Name</label>
+            <input type="text" id="tPartnerName" placeholder="e.g. Acme Corp">
+          </div>
+          <div class="field">
+            <label>Category</label>
+            <input type="text" id="tCategory" placeholder="e.g. Billing, Policy, Claim">
+          </div>
+        </div>
+        <div class="field">
+          <label>Mobile Number</label>
+          <input type="tel" id="tRequestMobile" placeholder="Contact number for this request">
         </div>
         <div class="field">
           <label>Attachments</label>
@@ -282,18 +315,42 @@
       <h3>Ticket Details</h3>
       <button class="modal-close" data-close="viewTicketModal">&times;</button>
     </div>
-    <div class="modal-body">
+
+    <div class="modal-tabs">
+      <div class="modal-tab active" data-tab="details">Details</div>
+      <div class="modal-tab" data-tab="activity">Activity</div>
+    </div>
+
+    <div class="modal-body" id="viewTicketTabDetails">
       <div class="field">
-        <label>Subject</label>
-        <input type="text" id="viewTicketSubject">
+        <label>Subject <span class="muted" style="font-weight:400;">(not editable)</span></label>
+        <input type="text" id="viewTicketSubject" readonly>
       </div>
       <div class="field">
-        <label>Description</label>
-        <textarea id="viewTicketDescription" rows="3"></textarea>
+        <label>Description <span class="muted" style="font-weight:400;">(not editable)</span></label>
+        <textarea id="viewTicketDescription" rows="3" readonly></textarea>
       </div>
       <div class="detail-block">
         <div class="lbl">Attachments</div>
         <div class="val" id="viewTicketAttachments"></div>
+      </div>
+      <div class="two-col" id="viewTicketExtraFields">
+        <div class="detail-block">
+          <div class="lbl">Partner Name</div>
+          <div class="val" id="viewTicketPartnerName">—</div>
+        </div>
+        <div class="detail-block">
+          <div class="lbl">Category</div>
+          <div class="val" id="viewTicketCategory">—</div>
+        </div>
+        <div class="detail-block">
+          <div class="lbl">Mobile Number</div>
+          <div class="val" id="viewTicketRequestMobile">—</div>
+        </div>
+        <div class="detail-block">
+          <div class="lbl">Raised From (Page)</div>
+          <div class="val" id="viewTicketPageName">—</div>
+        </div>
       </div>
       <div class="two-col">
         <div class="field">
@@ -310,12 +367,14 @@
         <textarea id="viewTicketRemarks" rows="2" placeholder="Add a remark..."></textarea>
       </div>
       <div class="detail-row"><span class="detail-label">Raised On</span><span id="viewTicketDate"></span></div>
-
-      <div style="margin-top:18px;">
-        <div class="lbl" style="font-size:11.5px;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);font-weight:700;margin-bottom:8px;">Activity</div>
-        <div class="activity-log" id="viewTicketActivity"></div>
-      </div>
+      <div class="detail-row hidden" id="viewTicketAssignedRow"><span class="detail-label">Assigned On</span><span id="viewTicketAssignedDate"></span></div>
+      <div class="detail-row hidden" id="viewTicketClosedRow"><span class="detail-label">Closed On</span><span id="viewTicketClosedDate"></span></div>
     </div>
+
+    <div class="modal-body hidden" id="viewTicketTabActivity">
+      <div class="activity-log" id="viewTicketActivity"></div>
+    </div>
+
     <div class="modal-foot">
       <button type="button" class="btn btn-ghost" data-close="viewTicketModal">Close</button>
       <button type="button" class="btn btn-primary" id="saveTicketBtn">Save Changes</button>
@@ -324,6 +383,7 @@
 </div>
 
 <script src="js/state.js"></script>
+<script src="js/api.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/theme.js"></script>
 <script src="js/employees.js"></script>

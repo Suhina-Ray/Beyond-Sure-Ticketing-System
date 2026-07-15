@@ -32,6 +32,10 @@ CREATE TABLE IF NOT EXISTS tickets (
     ticket_id       INT             AUTO_INCREMENT  PRIMARY KEY,
     subject         VARCHAR(255)    NOT NULL,
     description     TEXT            NOT NULL,
+    partner_name           VARCHAR(150)    NULL,
+    request_mobile_number  VARCHAR(20)     NULL,
+    page_name              VARCHAR(150)    NULL,
+    category                VARCHAR(100)    NULL,
     remarks         TEXT            NULL,
     assign_to       INT             NULL,
     status          ENUM(
@@ -40,6 +44,8 @@ CREATE TABLE IF NOT EXISTS tickets (
                         'Resolved',
                         'Closed'
                     )               NOT NULL DEFAULT 'Open',
+    assigned_at     TIMESTAMP       NULL,
+    closed_at       TIMESTAMP       NULL,
     created_at      TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP       DEFAULT CURRENT_TIMESTAMP
                                     ON UPDATE CURRENT_TIMESTAMP,
