@@ -1,5 +1,5 @@
 /* =========================================================
-   Employees — now backed by /api/employees
+   Employees - now backed by /api/employees
    ========================================================= */
 async function fetchEmployees(){
   const data = await apiFetch('/api/employees?all=true');
@@ -27,8 +27,8 @@ function renderEmployees(){
         </div>
       </td>
       <td data-label="Email" class="muted">${escapeHtml(emp.email)}</td>
-      <td data-label="Mobile" class="muted">${escapeHtml(emp.mobile || '—')}</td>
-      <td data-label="Designation / Dept" class="muted">${escapeHtml(emp.designation || '—')}${emp.department ? ' · ' + escapeHtml(emp.department) : ''}</td>
+      <td data-label="Mobile" class="muted">${escapeHtml(emp.mobile || 'N/A')}</td>
+      <td data-label="Designation / Dept" class="muted">${escapeHtml(emp.designation || 'N/A')}${emp.department ? ' · ' + escapeHtml(emp.department) : ''}</td>
       <td data-label="Status">
         <span class="status-pill" style="background:${emp.status === 'Active' ? hexToRgba('#12a862', 0.14) : hexToRgba('#e05353', 0.14)};color:${emp.status === 'Active' ? '#12a862' : '#e05353'};">${emp.status}</span>
       </td>
@@ -39,7 +39,7 @@ function renderEmployees(){
   `).join('');
 }
 
-// Backend has no DELETE /api/employees route — deactivating (status=Inactive)
+// Backend has no DELETE /api/employees route - deactivating (status=Inactive)
 // is the supported way to remove someone's access without breaking ticket
 // history (tickets keep a foreign key to assign_to).
 async function toggleEmployeeStatus(id, currentStatus){
@@ -65,8 +65,9 @@ async function toggleEmployeeStatus(id, currentStatus){
     renderEmployees();
     populateAssigneeOptions();
     renderDashboard();
+    showToast(`Employee ${newStatus === 'Inactive' ? 'deactivated' : 'reactivated'}.`, 'success');
   }catch(err){
-    alert(err.message);
+    showToast(err.message, 'error');
   }
 }
 
@@ -110,8 +111,9 @@ document.addEventListener('DOMContentLoaded', function(){
       populateAssigneeOptions();
       renderDashboard();
       closeModal('employeeModal');
+      showToast('Employee added.', 'success');
     }catch(err){
-      alert(err.message);
+      showToast(err.message, 'error');
     }finally{
       submitBtn.disabled = false;
     }

@@ -259,7 +259,7 @@ def update_employee(emp_id):
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-#  AUTH API  — Login / Logout / Me
+#  AUTH API  - Login / Logout / Me
 # ═════════════════════════════════════════════════════════════════════════════
 
 @app.route("/api/employees/login", methods=["POST"])
@@ -309,7 +309,7 @@ def employee_login():
     if not bcrypt.checkpw(password.encode(), employee["password"].encode()):
         return jsonify(success=False, message="Invalid email or password."), 401
 
-    # All good — generate token
+    # All good - generate token
     payload = {
         "employee_id":   employee["employee_id"],
         "employee_name": employee["employee_name"],
@@ -336,7 +336,7 @@ def employee_login():
 @token_required
 def employee_logout(current_employee):
     """
-    Logout — frontend should delete the token on their side.
+    Logout - frontend should delete the token on their side.
     Since JWT is stateless, this just confirms the token was valid.
     """
     return jsonify(success=True, message=f"Goodbye, {current_employee['employee_name']}! Logged out successfully.")
@@ -347,7 +347,7 @@ def employee_logout(current_employee):
 def get_my_profile(current_employee):
     """
     Employee views their own profile using their token.
-    No need to pass employee_id in the URL — taken from the token.
+    No need to pass employee_id in the URL - taken from the token.
     """
     try:
         conn   = get_ticket_db()
@@ -383,9 +383,9 @@ def get_my_profile(current_employee):
 @app.route("/api/tickets", methods=["POST"])
 def raise_ticket():
     """
-    Customer raises a query (public endpoint — no login required).
+    Customer raises a query (public endpoint - no login required).
     Body (JSON): subject, description, partner_name, request_mobile_number,
-                 page_name, category   — the latter four are optional.
+                 page_name, category   - the latter four are optional.
     Returns: ticket_id of the newly created ticket.
     """
     data = request.get_json()
@@ -431,7 +431,7 @@ def raise_ticket():
 @app.route("/api/tickets/stats/daily", methods=["GET"])
 def get_daily_ticket_stats():
     """
-    Day-wise ticket counts for the last 7 days (today inclusive) — used by
+    Day-wise ticket counts for the last 7 days (today inclusive) - used by
     the dashboard's opened-vs-closed chart.
     Returns: [{date, opened, closed}, ...] oldest -> newest.
     """
@@ -627,7 +627,7 @@ def get_ticket(ticket_id):
 def update_ticket(ticket_id):
     """
     Admin updates a ticket: assign to employee, change status, add remarks.
-    Body (JSON): assign_to (employee_id), status, remarks   — all optional
+    Body (JSON): assign_to (employee_id), status, remarks   - all optional
 
     assigned_at is stamped the moment a ticket goes from unassigned -> assigned.
     closed_at   is stamped the moment a ticket's status becomes 'Closed'.

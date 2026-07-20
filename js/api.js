@@ -1,5 +1,5 @@
 /* =========================================================
-   API helper — talks to the Flask backend (app.py)
+   API helper - talks to the Flask backend (app.py)
    Since app.py serves index.html/css/js itself (static_folder="."),
    we call the API with relative paths and it just works when you
    run `python app.py` from this folder.

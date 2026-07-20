@@ -1,5 +1,5 @@
 /* =========================================================
-   Tickets — now backed by /api/tickets
+   Tickets - now backed by /api/tickets
    ========================================================= */
 async function fetchTickets(){
   const data = await apiFetch('/api/tickets');
@@ -13,7 +13,7 @@ function getFilteredTickets(){
   const dateF = document.getElementById('filterTicketDate').value;
 
   return tickets.filter(t => {
-    // Closed tickets are hidden from the default view — only shown when the
+    // Closed tickets are hidden from the default view - only shown when the
     // Closed status filter is explicitly selected.
     if(!statusF && t.status === 'Closed') return false;
     if(q && !((t.subject || '').toLowerCase().includes(q) || (t.description || '').toLowerCase().includes(q))) return false;
@@ -69,7 +69,7 @@ function renderTickets(){
       </td>
       <td data-label="Subject" style="font-weight:700;">${escapeHtml(t.subject)}</td>
       <td data-label="Details" title="${escapeHtml(tooltip)}">
-        ${detailBits.length ? detailBits.join(' ') : '<span class="muted">—</span>'}
+        ${detailBits.length ? detailBits.join(' ') : '<span class="muted">N/A</span>'}
       </td>
       <td data-label="Status">${statusPillHtml(t.status)}</td>
       <td data-label="Assigned To" class="muted">${t.assigned_to_name ? escapeHtml(t.assigned_to_name) : 'Unassigned'}</td>
@@ -98,7 +98,7 @@ function renderActivityLog(activity){
   }
   box.innerHTML = entries.map(e => `
     <div class="activity-entry">
-      <div class="txt">${escapeHtml(e.remarks)}${e.done_by ? ' — <span class="muted">' + escapeHtml(e.done_by) + '</span>' : ''}</div>
+      <div class="txt">${escapeHtml(e.remarks)}${e.done_by ? ' - <span class="muted">' + escapeHtml(e.done_by) + '</span>' : ''}</div>
       <div class="ts">${formatDateTime(e.created_at)}</div>
     </div>
   `).join('');
@@ -122,10 +122,10 @@ async function openTicketModal(id){
     document.getElementById('viewTicketAttachments').innerHTML = t.attachments.length
       ? t.attachments.map(a => `<a href="/api/attachments/${a.attachment_id}" target="_blank">${escapeHtml(a.file_name)}</a>`).join(', ')
       : 'None';
-    document.getElementById('viewTicketPartnerName').textContent = t.partner_name || '—';
-    document.getElementById('viewTicketCategory').textContent = t.category || '—';
-    document.getElementById('viewTicketRequestMobile').textContent = t.request_mobile_number || '—';
-    document.getElementById('viewTicketPageName').textContent = t.page_name || '—';
+    document.getElementById('viewTicketPartnerName').textContent = t.partner_name || 'N/A';
+    document.getElementById('viewTicketCategory').textContent = t.category || 'N/A';
+    document.getElementById('viewTicketRequestMobile').textContent = t.request_mobile_number || 'N/A';
+    document.getElementById('viewTicketPageName').textContent = t.page_name || 'N/A';
     document.getElementById('viewTicketStatus').value = t.status;
     document.getElementById('viewTicketAssignedTo').value = t.assign_to || '';
     document.getElementById('viewTicketRemarks').value = '';
@@ -150,7 +150,7 @@ async function openTicketModal(id){
     renderActivityLog(t.activity);
     openModal('viewTicketModal');
   }catch(err){
-    alert(err.message);
+    showToast(err.message, 'error');
   }
 }
 
@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function(){
     const partnerName = document.getElementById('tPartnerName').value.trim();
     const category = document.getElementById('tCategory').value.trim();
     const requestMobile = document.getElementById('tRequestMobile').value.trim();
-    // Page Name is captured automatically — the page the user arrived from,
+    // Page Name is captured automatically - the page the user arrived from,
     // rather than typed in by hand. Falls back to the current page if there's
     // no referrer (e.g. this tab was opened directly).
     const pageName = document.referrer || document.title || window.location.href;
@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', function(){
     submitBtn.disabled = true;
     try{
       // POST /api/tickets accepts subject/description plus the optional
-      // detail fields below — it always creates the ticket as "Open" and
+      // detail fields below - it always creates the ticket as "Open" and
       // unassigned. So if the form set a different status/assignee/remarks,
       // we follow up with a PUT.
       const created = await apiFetch('/api/tickets', {
@@ -232,8 +232,9 @@ document.addEventListener('DOMContentLoaded', function(){
       renderTickets();
       renderDashboard();
       closeModal('ticketModal');
+      showToast('Ticket raised successfully.', 'success');
     }catch(err){
-      alert(err.message);
+      showToast(err.message, 'error');
     }finally{
       submitBtn.disabled = false;
     }
@@ -282,8 +283,9 @@ document.addEventListener('DOMContentLoaded', function(){
       renderTickets();
       renderDashboard();
       closeModal('viewTicketModal');
+      showToast('Ticket updated.', 'success');
     }catch(err){
-      alert(err.message);
+      showToast(err.message, 'error');
     }
   });
 });

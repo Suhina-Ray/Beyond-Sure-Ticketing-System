@@ -1,5 +1,5 @@
 /* =========================================================
-   Auth / Login  — now talks to /api/employees/login (real JWT auth)
+   Auth / Login  - now talks to /api/employees/login (real JWT auth)
    ========================================================= */
 function showApp(){
   document.getElementById('screen-login').classList.add('hidden');
@@ -8,7 +8,7 @@ function showApp(){
   document.getElementById('userAvatar').textContent = initials(currentUser.employee_name);
   const hour = new Date().getHours();
   const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  document.getElementById('dashboardGreeting').textContent = `${greet} — Organisation Overview`;
+  document.getElementById('dashboardGreeting').textContent = `${greet} - Organisation Overview`;
 
   loadAllData();
   goToPage('dashboard');
@@ -19,12 +19,14 @@ async function loadAllData(){
     await Promise.all([fetchEmployees(), fetchTickets()]);
   }catch(err){
     console.error('Failed to load data:', err);
-    alert('Could not load data from the server: ' + err.message);
+    showToast('Could not load data from the server: ' + err.message, 'error');
   }
   populateAssigneeOptions();
   renderEmployees();
   renderTickets();
   renderDashboard();
+  runNotificationChecks();
+  startNotificationPolling();
 }
 
 document.addEventListener('DOMContentLoaded', function(){
@@ -57,7 +59,8 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 
   document.getElementById('logoutBtn').addEventListener('click', async function(){
-    try{ await apiFetch('/api/employees/logout', { method: 'POST' }); }catch(e){ /* token may already be stale — ignore */ }
+    try{ await apiFetch('/api/employees/logout', { method: 'POST' }); }catch(e){ /* token may already be stale - ignore */ }
+    stopNotificationPolling();
     currentUser = null;
     setToken(null);
     localStorage.removeItem(LS_USER);

@@ -13,7 +13,7 @@ function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
 
 /* =========================================================
    Shared application state
-   (employees & tickets are now loaded from the API, not localStorage —
+   (employees & tickets are now loaded from the API, not localStorage -
    see fetchEmployees() in employees.js and fetchTickets() in tickets.js)
    ========================================================= */
 let currentUser = load(LS_USER, null);

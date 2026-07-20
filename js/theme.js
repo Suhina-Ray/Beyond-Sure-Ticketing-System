@@ -3,11 +3,11 @@
    ========================================================= */
 function applyTheme(theme){
   document.documentElement.setAttribute('data-theme', theme);
-  const icon = theme === 'dark' ? '🌙' : '☀️';
+  const icon = theme === 'dark' ? ICONS.moon : ICONS.sun;
   const loginIcon = document.getElementById('themeIconLogin');
   const mainIcon = document.getElementById('themeIconMain');
-  if(loginIcon) loginIcon.textContent = icon;
-  if(mainIcon) mainIcon.textContent = icon;
+  if(loginIcon) loginIcon.innerHTML = icon;
+  if(mainIcon) mainIcon.innerHTML = icon;
   save(LS_THEME, theme);
 }
 function toggleTheme(){
