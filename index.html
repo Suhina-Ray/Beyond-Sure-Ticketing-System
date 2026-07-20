@@ -25,7 +25,7 @@
           <img src="img/logo.jpg" alt="BeyondSure" class="brand-logo">
         </div>
         <div class="theme-toggle" id="themeToggleLogin" title="Toggle dark mode">
-          <div class="knob"><span id="themeIconLogin" class="icon-16"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></span></div>
+          <div class="knob"><span id="themeIconLogin">☀️</span></div>
         </div>
       </div>
       <h1 class="title">Welcome back</h1>
@@ -55,12 +55,12 @@
         <div class="nav-links">
           <div class="nav-link active" data-page="dashboard">Dashboard</div>
           <div class="nav-link" data-page="tickets">Tickets</div>
-          <div class="nav-link" data-page="employees">Employees</div>
+          <div class="nav-link" id="navEmployees" data-page="employees">Employees</div>
         </div>
       </div>
       <div class="right">
         <div class="theme-toggle" id="themeToggleMain" title="Toggle dark mode">
-          <div class="knob"><span id="themeIconMain" class="icon-16"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></span></div>
+          <div class="knob"><span id="themeIconMain">☀️</span></div>
         </div>
         <div class="notif-wrap">
           <div class="notif-bell" id="notifBell" title="Notifications">
@@ -117,7 +117,7 @@
       <p class="section-title">Ticket Status Breakdown</p>
       <div class="stage-grid" id="stageGrid"></div>
 
-      <p class="section-title">Opened vs Closed - Last 7 Days</p>
+      <p class="section-title">Opened vs Closed — Last 7 Days</p>
       <div class="panel chart-panel">
         <div id="ticketTrendChart"></div>
       </div>
@@ -126,7 +126,7 @@
       <div class="panel">
         <div id="followupsList"></div>
         <div id="followupsEmpty" class="empty-state hidden">
-          <div class="big"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h4l2 3h4l2-3h4"/><path d="M5.5 6h13l1.5 6v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-6Z"/></svg></div>
+          <div class="big">📭</div>
           <h3>No activity yet</h3>
           <p>Raise or update a ticket to see activity here.</p>
         </div>
@@ -162,6 +162,7 @@
               <th>Created</th>
               <th>Subject</th>
               <th>Details</th>
+              <th>Partner Name</th>
               <th>Status</th>
               <th>Assigned To</th>
             </tr>
@@ -169,14 +170,14 @@
           <tbody id="ticketBody"></tbody>
         </table>
         <div id="ticketEmpty" class="empty-state hidden">
-          <div class="big"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1.5a1.5 1.5 0 0 0 0 3V14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-1.5a1.5 1.5 0 0 0 0-3Z"/></svg></div>
+          <div class="big">🎫</div>
           <h3>No tickets found</h3>
           <p>Try adjusting your filters, or raise a new ticket.</p>
         </div>
         <div class="pagination" id="ticketPagination">
-          <button class="btn btn-ghost btn-sm" id="ticketPrevPage"><span class="icon-14"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></span> Prev</button>
+          <button class="btn btn-ghost btn-sm" id="ticketPrevPage">← Prev</button>
           <span class="page-indicator" id="ticketPageIndicator">Page 1</span>
-          <button class="btn btn-ghost btn-sm" id="ticketNextPage">Next <span class="icon-14"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></button>
+          <button class="btn btn-ghost btn-sm" id="ticketNextPage">Next →</button>
         </div>
       </div>
     </div>
@@ -205,7 +206,7 @@
           <tbody id="employeeBody"></tbody>
         </table>
         <div id="employeeEmpty" class="empty-state hidden">
-          <div class="big"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg></div>
+          <div class="big">🗂️</div>
           <h3>No employees yet</h3>
           <p>Add your first employee to get started.</p>
         </div>
@@ -253,9 +254,18 @@
             <input type="text" id="empDesignation" placeholder="e.g. Support Executive">
           </div>
         </div>
-        <div class="field">
-          <label>Department</label>
-          <input type="text" id="empDepartment" placeholder="e.g. Customer Support">
+        <div class="two-col">
+          <div class="field">
+            <label>Department</label>
+            <input type="text" id="empDepartment" placeholder="e.g. Customer Support">
+          </div>
+          <div class="field">
+            <label>Role</label>
+            <select id="empRole">
+              <option value="Employee">Employee</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </div>
         </div>
       </div>
       <div class="modal-foot">
@@ -353,19 +363,19 @@
       <div class="two-col" id="viewTicketExtraFields">
         <div class="detail-block">
           <div class="lbl">Partner Name</div>
-          <div class="val" id="viewTicketPartnerName">N/A</div>
+          <div class="val" id="viewTicketPartnerName">—</div>
         </div>
         <div class="detail-block">
           <div class="lbl">Category</div>
-          <div class="val" id="viewTicketCategory">N/A</div>
+          <div class="val" id="viewTicketCategory">—</div>
         </div>
         <div class="detail-block">
           <div class="lbl">Mobile Number</div>
-          <div class="val" id="viewTicketRequestMobile">N/A</div>
+          <div class="val" id="viewTicketRequestMobile">—</div>
         </div>
         <div class="detail-block">
           <div class="lbl">Raised From (Page)</div>
-          <div class="val" id="viewTicketPageName">N/A</div>
+          <div class="val" id="viewTicketPageName">—</div>
         </div>
       </div>
       <div class="two-col">
@@ -399,7 +409,6 @@
 </div>
 
 <div class="toast-container" id="toastContainer"></div>
-
 <script src="js/state.js"></script>
 <script src="js/api.js"></script>
 <script src="js/utils.js"></script>

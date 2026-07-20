@@ -23,7 +23,9 @@ TICKET_DB = {
     "password": os.getenv("DB_PASSWORD",    ""),
     "database": os.getenv("TICKET_DB_NAME", "ticket_db"),
 }
-JWT_SECRET = os.getenv("JWT_SECRET", "fallback-secret-change-me")
+JWT_SECRET = os.getenv("JWT_SECRET")
+if not JWT_SECRET:
+    raise RuntimeError("JWT_SECRET is not set. Add it to your .env file before starting the server.")
 
 def get_ticket_db():
     """Return a fresh connection to ticket_db (employees/tickets)."""
@@ -56,7 +58,7 @@ def token_required(f):
             conn   = get_ticket_db()
             cursor = conn.cursor(dictionary=True)
             cursor.execute(
-                "SELECT employee_id, employee_name, email, status FROM employees WHERE employee_id = %s",
+                "SELECT employee_id, employee_name, email, status, role FROM employees WHERE employee_id = %s",
                 (payload["employee_id"],)
             )
             employee = cursor.fetchone()
@@ -98,7 +100,7 @@ def get_employees():
             cursor.execute(
                 """
                 SELECT employee_id, employee_code, employee_name,
-                       email, mobile, designation, department, status, created_at
+                       email, mobile, designation, department, role, status, created_at
                 FROM employees
                 ORDER BY employee_name ASC
                 """
@@ -107,7 +109,7 @@ def get_employees():
             cursor.execute(
                 """
                 SELECT employee_id, employee_code, employee_name,
-                       email, mobile, designation, department, status, created_at
+                       email, mobile, designation, department, role, status, created_at
                 FROM employees
                 WHERE status = 'Active'
                 ORDER BY employee_name ASC
@@ -139,7 +141,7 @@ def get_employee(emp_id):
         cursor.execute(
             """
             SELECT employee_id, employee_code, employee_name,
-                   email, mobile, designation, department, status, created_at
+                   email, mobile, designation, department, role, status, created_at
             FROM employees WHERE employee_id = %s
             """,
             (emp_id,)
@@ -181,8 +183,8 @@ def create_employee():
         cursor.execute(
             """
             INSERT INTO employees
-                (employee_code, employee_name, email, mobile, password, designation, department)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+                (employee_code, employee_name, email, mobile, password, designation, department, role)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (
                 data["employee_code"].strip(),
@@ -192,6 +194,7 @@ def create_employee():
                 bcrypt.hashpw(data["password"].strip().encode(), bcrypt.gensalt()).decode(),
                 data.get("designation", "").strip() or None,
                 data.get("department",  "").strip() or None,
+                data.get("role", "Employee") if data.get("role") in ("Admin", "Employee") else "Employee",
             )
         )
         conn.commit()
@@ -281,7 +284,7 @@ def employee_login():
         cursor = conn.cursor(dictionary=True)
         cursor.execute(
             """
-            SELECT employee_id, employee_name, email, password, designation, department, status
+            SELECT employee_id, employee_name, email, password, designation, department, role, status
             FROM employees WHERE email = %s
             """,
             (email,)
@@ -314,6 +317,7 @@ def employee_login():
         "employee_id":   employee["employee_id"],
         "employee_name": employee["employee_name"],
         "email":         employee["email"],
+        "role":          employee["role"],
         "exp":           datetime.datetime.utcnow() + datetime.timedelta(hours=8)
     }
     token = jwt.encode(payload, JWT_SECRET, algorithm="HS256")
@@ -328,6 +332,7 @@ def employee_login():
             "email":        employee["email"],
             "designation":  employee["designation"],
             "department":   employee["department"],
+            "role":         employee["role"],
         }
     )
 
@@ -355,7 +360,7 @@ def get_my_profile(current_employee):
         cursor.execute(
             """
             SELECT employee_id, employee_code, employee_name, email,
-                   mobile, designation, department, status, created_at
+                   mobile, designation, department, role, status, created_at
             FROM employees WHERE employee_id = %s
             """,
             (current_employee["employee_id"],)

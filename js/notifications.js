@@ -143,9 +143,19 @@ function renderNotifications(){
 
 function toggleNotifPanel(forceState){
   const panel = document.getElementById('notifPanel');
+  const bell  = document.getElementById('notifBell');
   const shouldOpen = forceState !== undefined ? forceState : panel.classList.contains('hidden');
   panel.classList.toggle('hidden', !shouldOpen);
-  if(shouldOpen) renderNotifications();
+  if(shouldOpen){
+    // Position the fixed panel just below the bell button
+    const rect = bell.getBoundingClientRect();
+    const panelWidth = 360;
+    let left = rect.right - panelWidth;
+    if(left < 8) left = 8; // don't clip off the left edge on small screens
+    panel.style.top  = (rect.bottom + 10) + 'px';
+    panel.style.left = left + 'px';
+    renderNotifications();
+  }
 }
 
 document.addEventListener('DOMContentLoaded', function(){

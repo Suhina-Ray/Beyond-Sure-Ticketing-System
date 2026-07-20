@@ -56,7 +56,6 @@ function renderTickets(){
     const created = new Date(t.created_at);
     const detailBits = [];
     if(t.category) detailBits.push(`<span class="detail-chip">${escapeHtml(t.category)}</span>`);
-    if(t.partner_name) detailBits.push(`<span class="detail-chip muted">${escapeHtml(t.partner_name)}</span>`);
     const tooltipParts = [];
     if(t.request_mobile_number) tooltipParts.push(`Mobile: ${t.request_mobile_number}`);
     if(t.page_name) tooltipParts.push(`From: ${t.page_name}`);
@@ -71,6 +70,7 @@ function renderTickets(){
       <td data-label="Details" title="${escapeHtml(tooltip)}">
         ${detailBits.length ? detailBits.join(' ') : '<span class="muted">N/A</span>'}
       </td>
+      <td data-label="Partner Name" class="muted">${t.partner_name ? escapeHtml(t.partner_name) : '<span class="muted">—</span>'}</td>
       <td data-label="Status">${statusPillHtml(t.status)}</td>
       <td data-label="Assigned To" class="muted">${t.assigned_to_name ? escapeHtml(t.assigned_to_name) : 'Unassigned'}</td>
     </tr>

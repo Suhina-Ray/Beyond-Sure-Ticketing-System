@@ -1,28 +1,28 @@
 /* =========================================================
-   Toasts - small non-blocking status messages, replaces alert()
+   Toast notifications
    ========================================================= */
-const TOAST_ICONS = { success: ICONS.checkCircle, error: ICONS.alertTriangle, info: ICONS.info };
-
 function showToast(message, type = 'info', duration = 4000){
   const container = document.getElementById('toastContainer');
   if(!container) return;
 
+  const iconMap = { success: ICONS.check, error: ICONS.x, info: ICONS.info };
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
   toast.innerHTML = `
-    <span class="toast-icon">${TOAST_ICONS[type] || TOAST_ICONS.info}</span>
-    <span class="toast-msg">${escapeHtml(message)}</span>
-    <span class="toast-close">&times;</span>
+    <div class="toast-icon">${iconMap[type] || ICONS.info}</div>
+    <div class="toast-msg">${escapeHtml(message)}</div>
+    <span class="toast-close">${ICONS.x}</span>
   `;
 
-  const remove = () => {
-    toast.classList.add('leaving');
-    setTimeout(() => toast.remove(), 200);
-  };
-
-  toast.querySelector('.toast-close').addEventListener('click', remove);
-  const timer = setTimeout(remove, duration);
-  toast.addEventListener('mouseenter', () => clearTimeout(timer));
+  const close = toast.querySelector('.toast-close');
+  close.addEventListener('click', () => removeToast(toast));
 
   container.appendChild(toast);
+  setTimeout(() => removeToast(toast), duration);
+}
+
+function removeToast(toast){
+  if(!toast.parentNode) return;
+  toast.classList.add('leaving');
+  setTimeout(() => toast.parentNode && toast.parentNode.removeChild(toast), 220);
 }

@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS employees (
     password        VARCHAR(255)    NOT NULL,
     designation     VARCHAR(100)    NULL,
     department      VARCHAR(100)    NULL,
+    role            ENUM('Admin','Employee')
+                                    NOT NULL DEFAULT 'Employee',
     status          ENUM('Active', 'Inactive')
                                     NOT NULL DEFAULT 'Active',
     created_at      TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,

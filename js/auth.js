@@ -1,6 +1,10 @@
 /* =========================================================
    Auth / Login  - now talks to /api/employees/login (real JWT auth)
    ========================================================= */
+function isAdmin(){
+  return currentUser && currentUser.role === 'Admin';
+}
+
 function showApp(){
   document.getElementById('screen-login').classList.add('hidden');
   document.getElementById('screen-main').classList.remove('hidden');
@@ -10,19 +14,28 @@ function showApp(){
   const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   document.getElementById('dashboardGreeting').textContent = `${greet} - Organisation Overview`;
 
+  // Show/hide Employees nav based on role
+  const navEmp = document.getElementById('navEmployees');
+  if(navEmp) navEmp.classList.toggle('hidden', !isAdmin());
+
   loadAllData();
   goToPage('dashboard');
 }
 
 async function loadAllData(){
   try{
-    await Promise.all([fetchEmployees(), fetchTickets()]);
+    if(isAdmin()){
+      await Promise.all([fetchEmployees(), fetchTickets()]);
+      renderEmployees();
+    } else {
+      // Non-admins only load tickets and a minimal employee list for the assign-to dropdown
+      await Promise.all([fetchEmployeesMinimal(), fetchTickets()]);
+    }
   }catch(err){
     console.error('Failed to load data:', err);
     showToast('Could not load data from the server: ' + err.message, 'error');
   }
   populateAssigneeOptions();
-  renderEmployees();
   renderTickets();
   renderDashboard();
   runNotificationChecks();

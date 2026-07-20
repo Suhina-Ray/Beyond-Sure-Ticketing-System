@@ -1,8 +1,14 @@
 /* =========================================================
-   Employees - now backed by /api/employees
+   Employees — now backed by /api/employees
    ========================================================= */
 async function fetchEmployees(){
   const data = await apiFetch('/api/employees?all=true');
+  employees = data.employees || [];
+}
+
+// Non-admins only need the active employee list for the assign-to dropdown
+async function fetchEmployeesMinimal(){
+  const data = await apiFetch('/api/employees');
   employees = data.employees || [];
 }
 
@@ -27,10 +33,15 @@ function renderEmployees(){
         </div>
       </td>
       <td data-label="Email" class="muted">${escapeHtml(emp.email)}</td>
-      <td data-label="Mobile" class="muted">${escapeHtml(emp.mobile || 'N/A')}</td>
-      <td data-label="Designation / Dept" class="muted">${escapeHtml(emp.designation || 'N/A')}${emp.department ? ' · ' + escapeHtml(emp.department) : ''}</td>
+      <td data-label="Mobile" class="muted">${escapeHtml(emp.mobile || '—')}</td>
+      <td data-label="Designation / Dept" class="muted">${escapeHtml(emp.designation || '—')}${emp.department ? ' · ' + escapeHtml(emp.department) : ''}</td>
+      <td data-label="Role">
+        <span class="status-pill" style="background:${emp.role === 'Admin' ? hexToRgba('#7c4af0', 0.14) : hexToRgba('#4a92f0', 0.14)};color:${emp.role === 'Admin' ? '#7c4af0' : '#4a92f0'};"
+        >${emp.role || 'Employee'}</span>
+      </td>
       <td data-label="Status">
-        <span class="status-pill" style="background:${emp.status === 'Active' ? hexToRgba('#12a862', 0.14) : hexToRgba('#e05353', 0.14)};color:${emp.status === 'Active' ? '#12a862' : '#e05353'};">${emp.status}</span>
+        <span class="status-pill" style="background:${emp.status === 'Active' ? hexToRgba('#12a862', 0.14) : hexToRgba('#e05353', 0.14)};color:${emp.status === 'Active' ? '#12a862' : '#e05353'};"
+        >${emp.status}</span>
       </td>
       <td data-label="Actions" style="text-align:right;">
         <button class="btn btn-ghost btn-sm" onclick="toggleEmployeeStatus(${emp.employee_id}, '${emp.status}')">${emp.status === 'Active' ? 'Deactivate' : 'Reactivate'}</button>
@@ -39,7 +50,7 @@ function renderEmployees(){
   `).join('');
 }
 
-// Backend has no DELETE /api/employees route - deactivating (status=Inactive)
+// Backend has no DELETE /api/employees route — deactivating (status=Inactive)
 // is the supported way to remove someone's access without breaking ticket
 // history (tickets keep a foreign key to assign_to).
 async function toggleEmployeeStatus(id, currentStatus){
@@ -90,6 +101,23 @@ document.addEventListener('DOMContentLoaded', function(){
     openModal('employeeModal');
   });
 
+  // Auto-fill designation/department when Admin role is selected
+  document.getElementById('empRole').addEventListener('change', function(){
+    const desig = document.getElementById('empDesignation');
+    const dept  = document.getElementById('empDepartment');
+    if(this.value === 'Admin'){
+      desig.value = 'Administrator';
+      dept.value  = 'Management';
+      desig.readOnly = true;
+      dept.readOnly  = true;
+    } else {
+      if(desig.value === 'Administrator') desig.value = '';
+      if(dept.value  === 'Management')   dept.value  = '';
+      desig.readOnly = false;
+      dept.readOnly  = false;
+    }
+  });
+
   document.getElementById('employeeForm').addEventListener('submit', async function(e){
     e.preventDefault();
     const submitBtn = e.target.querySelector('button[type="submit"]');
@@ -100,7 +128,8 @@ document.addEventListener('DOMContentLoaded', function(){
       mobile: document.getElementById('empMobile').value.trim(),
       password: document.getElementById('empPassword').value,
       designation: document.getElementById('empDesignation').value.trim(),
-      department: document.getElementById('empDepartment').value.trim()
+      department: document.getElementById('empDepartment').value.trim(),
+      role: document.getElementById('empRole').value
     };
 
     submitBtn.disabled = true;
